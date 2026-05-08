@@ -1,0 +1,110 @@
+# ================================================================
+# JFT API
+# Description: FastAPI backend for the JFT application.
+# Author: Jerry
+# License: MIT
+# ================================================================
+
+import logging.config
+from contextlib import asynccontextmanager
+
+import uvicorn
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from pyinstrument import Profiler
+
+from backend.app.app_def import API_VERSION, ROOT_DIR
+from backend.app.build_parser import build_parser
+from backend.app.correlation import set_request_id
+from backend.app.utility import configure_logging
+from backend.db.mongodb import MongoClient
+from backend.routes import routers
+
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app):
+    """ Lifespan context manager to handle startup
+        and shutdown events.
+    """
+
+    global runner_task
+
+    # Initialize mongo client
+    mongodb_client = MongoClient()
+    await mongodb_client.connect()
+    await mongodb_client.configure()
+
+    # Attach the database client to the app state
+    app.state.mdb = mongodb_client
+
+    yield
+
+    # Close the mongo client connection
+    await mongodb_client.close()
+
+
+parser = build_parser()
+args = parser.parse_args()
+
+app = FastAPI(title="JFT",
+              description="API spec for JFT application",
+              version="0.1.0",
+              docs_url=f"/api/{API_VERSION}/docs",
+              redoc_url=f"/api/{API_VERSION}/redoc",
+              openapi_url=f"/api/{API_VERSION}/openapi.json",
+              debug=args.debug,
+              lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.middleware("http")
+async def profile_request(request: Request, call_next):
+    """ Profiler middleware """
+
+    # Only profile if ?profile=true is in the URL
+    if "profile" in request.query_params:
+        profiler = Profiler(async_mode="enabled")
+        profiler.start()
+        await call_next(request)
+        profiler.stop()
+        return HTMLResponse(profiler.output_html())
+
+    return await call_next(request)
+
+
+@app.middleware("http")
+async def correlation_id_middleware(request: Request, call_next):
+    """Correlation ID middleware.
+
+    Reads X-Request-ID from the incoming request (so clients can supply their
+    own traceable ID) or generates a fresh UUID4 if none is present.
+    The ID is stored in a ContextVar so every log line emitted during this
+    request automatically includes it via CorrelationFilter.
+    The same ID is echoed back in the X-Request-ID response header.
+    """
+    request_id = set_request_id(request.headers.get("X-Request-ID"))
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
+
+
+for router in routers:
+    app.include_router(router)
+
+if __name__ == "__main__":
+    log_conf = configure_logging(ROOT_DIR / 'log_conf.yaml', args.debug)
+    uvicorn.run("index:app",
+                host=args.host,
+                port=int(args.port),
+                reload=args.debug,
+                log_config=log_conf)

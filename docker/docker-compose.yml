@@ -1,0 +1,44 @@
+services:
+
+  jft-frontend-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile_frontend
+    image: jft-frontend-app:latest
+    container_name: jft-frontend-app
+    restart: unless-stopped
+    depends_on:
+      - jft-backend-app
+    ports:
+      - "80:80"
+      - "443:443"
+
+  jft-backend-app:
+    build:
+      context: .
+      dockerfile: Dockerfile_backend
+    image: jft-backend-app:latest
+    container_name: jft-backend-app
+    restart: unless-stopped
+    env_file:
+      - ../env/.env
+    depends_on:
+      - jft-mongodb-app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../:/home/orbit
+
+  jft-mongodb-app:
+    build:
+      context: .
+      dockerfile: Dockerfile_mongodb
+    image: jft-mongodb-app:latest
+    container_name: jft-mongodb-app
+    restart: unless-stopped
+    mem_limit: 1g
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.5"]
+    ports:
+      - "27017:27017"
+#    volumes:
+#      - /datadrive/sftp_user/mongodb:/data/db

@@ -1,0 +1,85 @@
+# Stage 1: Build the Angular application
+FROM node:alpine AS build
+
+# Maintainer information
+LABEL maintainer="jerry"
+
+# Set working directory
+WORKDIR /app
+
+# Copy application files and build the Angular app
+COPY frontend/package*.json ./
+RUN npm ci
+
+# Copy the rest of the application source code
+COPY frontend/ .
+RUN npm run build -- --configuration=production --output-mode=static
+
+# Debug: List the dist directory to see what was created
+RUN echo "=== Build output ===" && \
+    ls -la dist/ && \
+    echo "=== dist/orbit-app/ ===" && \
+    ls -la dist/orbit-app/ && \
+    echo "=== dist/orbit-app/browser/ ===" && \
+    ls -la dist/orbit-app/browser/ || echo "No browser folder"
+
+# Stage 2: Serve the application with Nginx
+FROM nginx:alpine
+
+# Temporarily use HTTP repositories to avoid TLS issues, install packages including ca-certificates
+RUN sed -i 's/https/http/g' /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache \
+    ca-certificates \
+    openssl && \
+    sed -i 's/http:/https:/g' /etc/apk/repositories
+
+# Copy built Angular app from build stage (support multiple output layouts)
+# Copy all project build outputs into nginx html directory
+COPY --from=build /app/dist/* /usr/share/nginx/html/
+
+# Rename index.csr.html to index.html for nginx if present
+RUN if [ -f /usr/share/nginx/html/index.csr.html ]; then \
+            mv /usr/share/nginx/html/index.csr.html /usr/share/nginx/html/index.html; \
+        fi
+
+# If build output was placed under a subdirectory (e.g. /usr/share/nginx/html/orbit),
+# move its contents up into the html root so nginx serves index.html at /
+RUN for d in /usr/share/nginx/html/*; do \
+            if [ -d "$d" ]; then \
+                cp -r "$d"/* /usr/share/nginx/html/ || true; \
+                rm -rf "$d" || true; \
+            fi; \
+        done
+
+# Remove default nginx HTML
+RUN rm -rf /usr/share/nginx/html/50x.html || true
+
+# Fix permissions
+RUN chmod -R 755 /usr/share/nginx/html && \
+    chown -R nginx:nginx /usr/share/nginx/html
+
+# Verify files were copied
+RUN echo "=== Nginx html contents ===" && ls -la /usr/share/nginx/html/
+
+# Generate self-signed SSL certificates
+RUN mkdir -p /etc/nginx/ssl && \
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/nginx/ssl/nginx.key \
+    -out /etc/nginx/ssl/nginx.crt \
+    -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost" && \
+    chmod 600 /etc/nginx/ssl/nginx.key && \
+    chmod 644 /etc/nginx/ssl/nginx.crt
+
+# Copy custom nginx configuration
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Remove the default nginx welcome page config
+RUN rm -f /etc/nginx/conf.d/default.conf.dpkg-dist /etc/nginx/conf.d/default.conf.default
+
+# Verify nginx config
+RUN echo "=== Nginx config ===" && cat /etc/nginx/conf.d/default.conf
+
+# Expose ports 80 and 443
+EXPOSE 80 443
+CMD ["nginx", "-g", "daemon off;"]

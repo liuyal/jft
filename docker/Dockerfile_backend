@@ -1,0 +1,33 @@
+# Dockerfile for Python backend with minimal Alpine base
+FROM python:3.12-alpine
+
+# Maintainer information
+LABEL maintainer="jerry"
+
+# Set working directory
+WORKDIR /home
+
+# Temporarily use HTTP repositories to avoid TLS issues, install packages including ca-certificates
+RUN sed -i 's/https/http/g' /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache \
+    ca-certificates \
+    supervisor \
+    sqlite \
+    bash && \
+    sed -i 's/http:/https:/g' /etc/apk/repositories
+
+# Environment variables
+ENV PYTHONPATH=/home/orbit
+ENV MONGODB_HOST=mongodb-app
+
+# Copy requirements file and install dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Initialize a new SQLite database file if it doesn't exist
+RUN mkdir -p /data
+
+# Configure Supervisor to manage container services
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

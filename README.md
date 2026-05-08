@@ -1,2 +1,2 @@
-# jft
-Jerry Fitness Tracker App
+# JFT
+Jerry Fitness Tracker
