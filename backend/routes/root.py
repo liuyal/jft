@@ -12,7 +12,7 @@ import logging
 from fastapi import APIRouter, Request, status, Response
 from fastapi.responses import RedirectResponse
 
-from backend.app.app_def import API_VERSION
+from backend.app.app_def import API_VERSION, DB_ALL
 
 router = APIRouter()
 
@@ -50,6 +50,6 @@ async def reset_database(request: Request):
     db = request.app.state.mdb
 
     # Reset the database
-    # await db.configure()
+    await db.configure(clean_db=DB_ALL)
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

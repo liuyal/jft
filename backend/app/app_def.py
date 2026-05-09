@@ -57,14 +57,15 @@ MONGODB_PASS = os.getenv("MONGODB_PASS", "password").strip()
 MONGODB_URL = f"mongodb://{MONGODB_USER}:{MONGODB_PASS}@{MONGODB_HOST}:{MONGODB_PORT}"
 
 # DB Constants
-DB_CORE = "JFT"
+DB_CORE = "jft"
+DB_NAME_ACTIVITY = f"{DB_CORE}-activity"
 
 # DB COLLECTIONS
 DB_COLLECTION_ACTIVITY = DBCollection(name="activity")
 
 # DB Configs
 DB_NAME_JFT = DB(
-    name=f"{DB_CORE}",
+    name=f"{DB_CORE}-activity",
     collections=[DB_COLLECTION_ACTIVITY]
 )
 

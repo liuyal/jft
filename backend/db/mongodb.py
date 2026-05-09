@@ -65,11 +65,11 @@ class MongoClient(DatabaseClient):
             self._db_client.close()
 
     async def configure(self, **kwargs) -> None:
-        """Configure database connection parameters.
+        """ Configure database connection parameters.
 
-        Retries up to 3 times with brief backoff to survive the transient
-        AutoReconnect that MongoDB sometimes raises immediately after a
-        drop_database while the server re-establishes internal state.
+            Retries up to 3 times with brief backoff to survive the transient
+            AutoReconnect that MongoDB sometimes raises immediately after a
+            drop_database while the server re-establishes internal state.
         """
 
         max_attempts = 3
