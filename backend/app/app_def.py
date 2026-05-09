@@ -39,7 +39,8 @@ API_VERSION = "v1"
 
 # Directories
 ROOT_DIR = pathlib.Path(__file__).parents[2]
-TMP_DIR = ROOT_DIR / 'tmp'
+BACKEND_DIR = pathlib.Path(__file__).parents[1]
+TMP_DIR = BACKEND_DIR / 'tmp'
 TMP_DIR.mkdir(parents=True, exist_ok=True)
 
 # Load environment variables from .env file
@@ -55,3 +56,17 @@ MONGODB_USER = os.getenv("MONGODB_USER", "admin").strip()
 MONGODB_PASS = os.getenv("MONGODB_PASS", "password").strip()
 MONGODB_URL = f"mongodb://{MONGODB_USER}:{MONGODB_PASS}@{MONGODB_HOST}:{MONGODB_PORT}"
 
+# DB Constants
+DB_CORE = "JFT"
+
+# DB COLLECTIONS
+DB_COLLECTION_ACTIVITY = DBCollection(name="activity")
+
+# DB Configs
+DB_NAME_JFT = DB(
+    name=f"{DB_CORE}",
+    collections=[DB_COLLECTION_ACTIVITY]
+)
+
+# DB Mapping
+DB_ALL = [DB_NAME_JFT]

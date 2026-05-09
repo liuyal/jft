@@ -11,8 +11,8 @@ import pytest
 import requests
 
 
-class OrbitTMBaseTest:
-    """Base class for Orbit backend tests."""
+class BaseTest:
+    """Base class for backend tests."""
 
     @classmethod
     def setup_class(cls):

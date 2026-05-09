@@ -15,11 +15,7 @@ from cachetools import TTLCache
 # maxsize  – maximum number of distinct cache entries before LRU eviction.
 # ttl      – seconds before a cached entry automatically expires.
 #
-# Cache keys used across the application:
-#   "projects:all"              → GET /tm/projects
-#   "projects:<project_key>"    → GET /tm/projects/{project_key}
-#   "test_cases:all"            → GET /tm/test-cases
-#   "test_cases:<project_key>"  → GET /tm/projects/{project_key}/test-cases
+# Cache keys used across the application
 # ---------------------------------------------------------------------------
 
 _cache: TTLCache = TTLCache(maxsize=256, ttl=60)
