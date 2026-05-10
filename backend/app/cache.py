@@ -46,3 +46,10 @@ def cache_invalidate_prefix(prefix: str) -> None:
     for key in list(_cache.keys()):
         if key.startswith(prefix):
             _cache.pop(key, None)
+
+
+def cache_clear_all() -> None:
+    """Remove all entries from the cache."""
+
+    _cache.clear()
+

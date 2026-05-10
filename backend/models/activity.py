@@ -15,32 +15,36 @@ router = APIRouter()
 
 class Activity(BaseModel):
     _id: str
-    activity_key: str
     activity_type: str
     title: str
     date: str
     distance: float
-    elevation_gain: float
-    duration: float
+    elevation_gain: float | None
+    start_time: int | None
+    end_time: int | None
+    duration: float | None
     model_config = {"extra": "forbid"}
 
 
 class ActivityCreate(BaseModel):
-    activity_key: str
     activity_type: str
     title: str
     date: str
-    distance: float = 0.0
-    elevation_gain: float = 0.0
-    duration: float = 0.0
+    distance: float
+    elevation_gain: float | None = None
+    start_time: int | None = None
+    end_time: int | None = None
+    duration: float | None = None
     model_config = {"extra": "forbid"}
 
 
 class ActivityUpdate(BaseModel):
-    title: str = ""
-    activity_type: str = ""
-    date: str = ""
-    distance: float = 0.0
-    elevation_gain: float = 0.0
-    duration: float = 0.0
+    activity_type: str | None = None
+    title: str | None = None
+    date: str | None = None
+    distance: float | None = None
+    elevation_gain: float | None = None
+    start_time: int | None = None
+    end_time: int | None = None
+    duration: float | None = None
     model_config = {"extra": "forbid"}

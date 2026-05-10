@@ -71,3 +71,6 @@ DB_NAME_JFT = DB(
 
 # DB Mapping
 DB_ALL = [DB_NAME_JFT]
+
+# Cache Constants
+CACHE_KEY_ACTIVITY = "activities:all"
