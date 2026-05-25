@@ -12,7 +12,7 @@ import pytest
 
 
 def pytest_addoption(parser):
-    """ Add test framework options to the pytest command parser."""
+    """ Add test framework options to the pytest command parser """
 
     parser.addoption(
         '--host',

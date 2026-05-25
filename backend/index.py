@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pyinstrument import Profiler
 
-from backend.app.app_def import API_VERSION, ROOT_DIR
+from backend.app.app_def import API_VERSION, BACKEND_DIR
 from backend.app.build_parser import build_parser
 from backend.app.correlation import set_request_id
 from backend.app.utility import configure_logging
@@ -75,7 +75,9 @@ async def profile_request(request: Request, call_next):
     if "profile" in request.query_params:
         profiler = Profiler(async_mode="enabled")
         profiler.start()
+
         await call_next(request)
+
         profiler.stop()
         return HTMLResponse(profiler.output_html())
 
@@ -92,6 +94,7 @@ async def correlation_id_middleware(request: Request, call_next):
     request automatically includes it via CorrelationFilter.
     The same ID is echoed back in the X-Request-ID response header.
     """
+
     request_id = set_request_id(request.headers.get("X-Request-ID"))
     response = await call_next(request)
     response.headers["X-Request-ID"] = request_id
@@ -102,7 +105,7 @@ for router in routers:
     app.include_router(router)
 
 if __name__ == "__main__":
-    log_conf = configure_logging(ROOT_DIR / 'log_conf.yaml', args.debug)
+    log_conf = configure_logging(BACKEND_DIR / 'log_conf.yaml', args.debug)
     uvicorn.run("index:app",
                 host=args.host,
                 port=int(args.port),

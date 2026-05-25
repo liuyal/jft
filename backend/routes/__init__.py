@@ -6,7 +6,7 @@
 # ================================================================
 
 from .root import router as root_router
-from .runners import router as runners_router
+from .activity import router as runners_router
 
 routers = [root_router,
            runners_router]
